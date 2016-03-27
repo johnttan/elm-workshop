@@ -58,9 +58,9 @@ searchResultDecoder =
   Json.Decode.object3
     SearchResult
     -- See https://developer.github.com/v3/search/#example
-    ("TODO what field goes here?" := Json.Decode.int)
-    ("TODO what field goes here?" := Json.Decode.string)
-    ("TODO what field goes here?" := Json.Decode.int)
+    ("id" := Json.Decode.int)
+    ("name" := Json.Decode.string)
+    ("stargazers_count" := Json.Decode.int)
 
 
 type alias Model =
@@ -72,7 +72,7 @@ type alias Model =
 type alias SearchResult =
   { id : ResultId
   , name : String
-  , stars : Int
+  , stargazers_count : Int
   }
 
 
@@ -97,17 +97,19 @@ view address model =
         , span [ class "tagline" ] [ text "“Like GitHub, but for Elm things.”" ]
         ]
     , input [ class "search-query", onInput address SetQuery, defaultValue model.query ] []
-    , button [ class "search-button" {- TODO on click, run a search -} ] [ text "Search" ]
+    , button [ class "search-button", onClick address Search ] [ text "Search" ]
     , ul
         [ class "results" ]
         (List.map (viewSearchResult address) model.results)
     ]
 
 
+onInput : Address a -> (String -> a) -> Attribute
 onInput address wrap =
   on "input" targetValue (\val -> Signal.message address (wrap val))
 
 
+defaultValue : String -> Attribute
 defaultValue str =
   property "defaultValue" (Json.Encode.string str)
 
@@ -116,7 +118,7 @@ viewSearchResult : Address Action -> SearchResult -> Html
 viewSearchResult address result =
   li
     []
-    [ span [ class "star-count" ] [ text (toString result.stars) ]
+    [ span [ class "star-count" ] [ text (toString result.stargazers_count) ]
     , a
         [ href ("https://github.com/" ++ result.name), target "_blank" ]
         [ text result.name ]
@@ -137,7 +139,7 @@ update : Action -> Model -> ( Model, Effects Action )
 update action model =
   case action of
     Search ->
-      ( model, Effects.none {- TODO use searchFeed to run a search -} )
+      ( model, Effects.task (searchFeed model.query) )
 
     SetQuery query ->
       ( { model | query = query }, Effects.none )
@@ -146,6 +148,9 @@ update action model =
       let
         newModel =
           { model | results = results }
+
+        lol =
+          Debug.log (toString results)
       in
         ( newModel, Effects.none )
 

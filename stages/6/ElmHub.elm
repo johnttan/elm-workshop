@@ -18,7 +18,7 @@ searchFeed query =
     url =
       "https://api.github.com/search/repositories?q="
         ++ query
-        ++ "+language:elm&sort=stars&order=desc"
+        ++ "+language:elm&sort=stargazers_count&order=desc"
 
     task =
       Http.get responseDecoder url
@@ -37,7 +37,7 @@ searchResultDecoder =
   Json.Decode.object3
     SearchResult
     ("id" := Json.Decode.int)
-    ("full_name" := Json.Decode.string)
+    ("name" := Json.Decode.string)
     ("stargazers_count" := Json.Decode.int)
 
 
@@ -50,7 +50,7 @@ type alias Model =
 type alias SearchResult =
   { id : ResultId
   , name : String
-  , stars : Int
+  , stargazers_count : Int
   }
 
 
@@ -82,10 +82,12 @@ view address model =
     ]
 
 
+onInput : Address a -> (String -> a) -> Attribute
 onInput address wrap =
   on "input" targetValue (\val -> Signal.message address (wrap val))
 
 
+defaultValue : String -> Attribute
 defaultValue str =
   property "defaultValue" (Json.Encode.string str)
 
@@ -94,7 +96,7 @@ viewSearchResult : Address Action -> SearchResult -> Html
 viewSearchResult address result =
   li
     []
-    [ span [ class "star-count" ] [ text (toString result.stars) ]
+    [ span [ class "star-count" ] [ text (toString result.stargazers_count) ]
     , a
         [ href ("https://github.com/" ++ result.name), target "_blank" ]
         [ text result.name ]

@@ -67,12 +67,15 @@ view address model =
         , span [ class "tagline" ] [ text "“Like GitHub, but for Elm things.”" ]
         ]
     , input
-        [ class "search-query"
+        [ class
+            "search-query"
           -- TODO when we receive onInput, set the query in the model
         , defaultValue model.query
+        , onInput address (\value -> SetQuery value)
         ]
         []
     , button [ class "search-button" ] [ text "Search" ]
+    , text model.query
     , ul
         [ class "results" ]
         (List.map (viewSearchResult address) model.results)
@@ -84,6 +87,7 @@ onInput address wrap =
   on "input" targetValue (\val -> Signal.message address (wrap val))
 
 
+defaultValue : String -> Attribute
 defaultValue str =
   property "defaultValue" (Json.Encode.string str)
 
@@ -98,7 +102,9 @@ viewSearchResult address result =
         [ text result.name ]
     , button
         -- TODO add an onClick handler that sends a DeleteById action
-        [ class "hide-result" ]
+        [ class "hide-result"
+        , onClick address (DeleteById result.id)
+        ]
         [ text "X" ]
     ]
 
@@ -110,11 +116,15 @@ type Action
 
 update : Action -> Model -> Model
 update action model =
-  -- TODO if we get a SetQuery action, use it to set the model's query field,
-  -- and if we get a DeleteById action, delete the appropriate result
-  model
+  case action of
+    SetQuery val ->
+      { model | query = val }
+
+    DeleteById id ->
+      { model | results = (List.filter (\value -> value.id /= id) model.results) }
 
 
+main : Signal Html
 main =
   StartApp.start
     { view = view
